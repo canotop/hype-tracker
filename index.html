@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>XRP Hype Tracker – Posts vs Price</title>
+
+  <!-- Twitter / Open Graph cards (makes the link look good on X) -->
+  <meta property="og:title" content="XRP Hype Tracker" />
+  <meta property="og:description" content="See XRP hype posts next to the actual price action. Green = price went up after the post." />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="XRP Hype Tracker" />
+  <meta name="twitter:description" content="Hype posts vs real XRP price movement. Select posts → see the numbers." />
+
+  <style>
+    :root {
+      --bg: #0b0d12;
+      --card: #14171f;
+      --border: #252a36;
+      --text: #e8ecf4;
+      --muted: #8b93a7;
+      --accent: #00d4aa;
+      --green: #22c55e;
+      --red: #ef4444;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 16px;
+      max-width: 1100px;
+      margin: 0 auto;
+      min-height: 100vh;
+    }
+    h1 { font-size: 1.6rem; margin-bottom: 4px; }
+    .subtitle { color: var(--muted); font-size: 0.95rem; margin-bottom: 20px; }
+    .controls {
+      display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;
+      background: var(--card); padding: 14px; border-radius: 12px; border: 1px solid var(--border);
+    }
+    select, input[type="text"] {
+      background: #0f1219; border: 1px solid var(--border); color: var(--text);
+      padding: 10px 12px; border-radius: 8px; font-size: 14px; flex: 1; min-width: 140px;
+    }
+    button {
+      background: var(--accent); color: #000; border: none; padding: 10px 18px;
+      border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px;
+      white-space: nowrap;
+    }
+    button:hover { opacity: 0.92; }
+    button.secondary { background: #252a36; color: var(--text); }
+    .results { display: grid; gap: 14px; }
+    .post-card {
+      background: var(--card); border: 2px solid var(--border); border-radius: 12px;
+      padding: 14px; display: flex; gap: 14px; transition: border-color 0.2s;
+    }
+    .post-card.selected { border-color: var(--accent); }
+    .post-card.green { border-color: var(--green); box-shadow: 0 0 0 1px var(--green); }
+    .post-card.red { border-color: var(--red); box-shadow: 0 0 0 1px var(--red); }
+    .checkbox { margin-top: 3px; transform: scale(1.15); }
+    .post-content { flex: 1; min-width: 0; }
+    .author { font-weight: 600; }
+    .handle { color: var(--muted); font-size: 0.9em; }
+    .timestamp { color: var(--muted); font-size: 0.82em; margin: 2px 0 8px; }
+    .text { margin-bottom: 8px; white-space: pre-wrap; font-size: 0.95rem; }
+    .price-panel {
+      min-width: 200px; background: #0f1219; border-radius: 10px; padding: 12px;
+      border: 1px solid var(--border); font-size: 0.88em;
+    }
+    .price-panel h4 { margin-bottom: 8px; font-size: 0.9em; color: var(--accent); }
+    .price-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
+    .price-label { color: var(--muted); }
+    .price-value { font-weight: 600; }
+    .delta { font-size: 0.85em; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+    .delta.up { color: var(--green); }
+    .delta.down { color: var(--red); }
+    .hidden { display: none !important; }
+    .empty { text-align: center; color: var(--muted); padding: 40px 10px; }
+    .stage-title { font-size: 1.15rem; margin: 20px 0 10px; }
+    #confirm-bar {
+      position: sticky; bottom: 0; background: var(--card); border-top: 1px solid var(--border);
+      padding: 14px 16px; display: flex; justify-content: space-between; align-items: center;
+      gap: 12px; margin: 20px -16px -16px; flex-wrap: wrap;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    @media (max-width: 640px) {
+      .post-card { flex-direction: column; }
+      .price-panel { min-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>XRP Hype Tracker</h1>
+  <p class="subtitle">Search hype posts → select → see real price action next to them</p>
+
+  <div id="search-stage">
+    <div class="controls">
+      <select id="month-filter">
+        <option value="all">All (Jul–Sep 2026)</option>
+        <option value="2026-07">July 2026</option>
+        <option value="2026-08">August 2026</option>
+        <option value="2026-09">September 2026</option>
+      </select>
+      <input type="text" id="keyword" placeholder="blow up, moon, explode…" value="blow up OR moon OR explode">
+      <button onclick="runSearch()">Search</button>
+    </div>
+    <div id="search-results" class="results"></div>
+  </div>
+
+  <div id="select-stage" class="hidden">
+    <div class="stage-title">Selected (<span id="selected-count">0</span>)</div>
+    <div id="selected-list" class="results"></div>
+    <div id="confirm-bar">
+      <span>Load XRP price data for these posts?</span>
+      <div style="display:flex;gap:8px;">
+        <button class="secondary" onclick="backToSearch()">← Back</button>
+        <button onclick="confirmAndShowPrices()">Confirm & Show Prices</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="final-stage" class="hidden">
+    <div class="stage-title">Posts + XRP Price Action</div>
+    <p style="color:var(--muted);margin-bottom:14px;font-size:0.9rem;">
+      Green outline = price rose in the 3 days after · Red = no meaningful upside
+    </p>
+    <div id="final-results" class="results"></div>
+    <button class="secondary" style="margin-top:20px" onclick="resetApp()">Start Over</button>
+  </div>
+
+<script>
+const POSTS = [
+  { id: "53", author: "Jenny", handle: "@Jenny_Solstice", date: "2026-07-06", time: "17:56", text: "$XRP IS GONNA CREATE NEW WAVE OF MILLIONAIRES SOON\nXRP IS ABOUT TO SHOCK THE MARKET\nMOST PEOPLE ARE NOT READY\nPRESSURE HAS BEEN BUILDING\nWHEN IT RELEASES IT WILL MELT FACES", url: "https://x.com/Jenny_Solstice/status/2074190677592944800" },
+  { id: "28", author: "XRPMoonWalk", handle: "@XRPMoonWalkK", date: "2026-08-26", time: "18:13", text: "$XRP is going to blow their minds 😎\n#Welcome", url: "https://x.com/XRPMoonWalkK/status/2092676864825254135" },
+  { id: "27", author: "XRPMaxi1965", handle: "@XRPMaxi1965", date: "2026-08-26", time: "20:55", text: "Absolutely Stern. Time to blow this up #XRP", url: "https://x.com/XRPMaxi1965/status/2092717698795044956" },
+  { id: "51", author: "JAVON⚡️MARKS", handle: "@JavonTM1", date: "2026-09-05", time: "14:56", text: "$XRP, right after spotting the breakout… went on to absolutely surge soon after, adding nearly +55% and right now as this breakout holds, prices look SET FOR HIGHER!\nThis breakout can lead into another near 140% move back to $3.50…", url: "https://x.com/JavonTM1/status/2096251217055781235" },
+  { id: "55", author: "Cleophee_Lune", handle: "@Cleophee_Lune", date: "2026-09-20", time: "23:22", text: "$XRP is about to repeat 2017.\nWe're now sitting on the exact macro support that launched the last legendary explosion.\nNext stops: $1.50-$2.00 → $3.20-$5.50 → $6.00-$10.00", url: "https://x.com/Cleophee_Lune/status/2101814363615277089" },
+  { id: "54", author: "Natasha", handle: "@Natashaxrp", date: "2026-09-22", time: "14:35", text: "$XRP is about to repeat 2017\nWe're now sitting on the exact macro support that launched the last legendary explosion.\nNext stops: Major Resistance → $1.50-$2.00 … Parabolic extension → $6.00-$10.00", url: "https://x.com/Natashaxrp/status/2102406534722662427" },
+  { id: "39", author: "peteskeetpete", handle: "@peteskeetpete", date: "2026-09-27", time: "17:01", text: "AGAIN, I am going to reiterate for XRP, this is the same scenario as 1 DOLLAR.\nEXCEPT, this next move is not going to be some measly 50 cents, XRP is going to BLOW the TOP OFF.", url: "https://x.com/peteskeetpete/status/2104255064051458529" },
+  { id: "52", author: "JAVON⚡️MARKS", handle: "@JavonTM1", date: "2026-09-27", time: "23:38", text: "$XRP, let's not sit here and ignore the fact that prices have DISPLAYED THE EXACT BULLISH BREAKOUT we've been watching… TO $15+!\nPrices could soar another +874%…", url: "https://x.com/JavonTM1/status/2104355139431838101" },
+  { id: "38", author: "Zeltima", handle: "@zeltima", date: "2026-09-28", time: "12:14", text: "$XRP put in another higher low against $BTC on the 1D. 1W flipped resistance into support. Not following a $BTC pump, $XRP is poised to fucking blow.", url: "https://x.com/zeltima/status/2104545276468048355" },
+  { id: "34", author: "peteskeetpete", handle: "@peteskeetpete", date: "2026-09-30", time: "09:27", text: "sell wall built up at $1.52 for XRP, let’s blow through it. we’ve got places to be and things to see.", url: "https://x.com/peteskeetpete/status/2105228005760983474" }
+];
+
+const PRICE_DATA = {
+  "2026-07-05": 1.16, "2026-07-06": 1.14, "2026-07-07": 1.11, "2026-07-08": 1.09, "2026-07-09": 1.09,
+  "2026-08-25": 1.49, "2026-08-26": 1.43, "2026-08-27": 1.45, "2026-08-28": 1.38, "2026-08-29": 1.40,
+  "2026-09-04": 1.40, "2026-09-05": 1.41, "2026-09-06": 1.42, "2026-09-07": 1.39, "2026-09-08": 1.42,
+  "2026-09-19": 1.41, "2026-09-20": 1.41, "2026-09-21": 1.54, "2026-09-22": 1.57, "2026-09-23": 1.50,
+  "2026-09-24": 1.53, "2026-09-25": 1.57, "2026-09-26": 1.53, "2026-09-27": 1.52, "2026-09-28": 1.50,
+  "2026-09-29": 1.49, "2026-09-30": 1.49, "2026-10-01": 1.49, "2026-10-02": 1.48, "2026-10-03": 1.49
+};
+
+function getPrice(dateStr) { return PRICE_DATA[dateStr] || null; }
+function addDays(dateStr, days) {
+  const d = new Date(dateStr + "T12:00:00Z");
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+function runSearch() {
+  const month = document.getElementById("month-filter").value;
+  const keyword = document.getElementById("keyword").value.toLowerCase();
+  const keywords = keyword.split(/\s+OR\s+/i).map(k => k.trim()).filter(Boolean);
+  let filtered = POSTS.filter(p => {
+    if (month !== "all" && !p.date.startsWith(month)) return false;
+    if (keywords.length === 0) return true;
+    const text = (p.text + " " + p.author).toLowerCase();
+    return keywords.some(k => text.includes(k));
+  });
+  const container = document.getElementById("search-results");
+  if (filtered.length === 0) {
+    container.innerHTML = `<div class="empty">No posts matched. Try different filters.</div>`;
+    return;
+  }
+  container.innerHTML = filtered.map(p => `
+    <div class="post-card" id="card-${p.id}">
+      <input type="checkbox" class="checkbox" data-id="\( {p.id}" onchange="toggleSelect(' \){p.id}')">
+      <div class="post-content">
+        <div class="author">\( {p.author} <span class="handle"> \){p.handle}</span></div>
+        <div class="timestamp">${p.date} ${p.time} UTC</div>
+        <div class="text">${p.text}</div>
+        <a href="${p.url}" target="_blank" rel="noopener">View on X →</a>
+      </div>
+    </div>
+  `).join("");
+}
+
+const selectedIds = new Set();
+function toggleSelect(id) {
+  const card = document.getElementById(`card-${id}`);
+  if (selectedIds.has(id)) {
+    selectedIds.delete(id);
+    card.classList.remove("selected");
+  } else {
+    selectedIds.add(id);
+    card.classList.add("selected");
+  }
+  updateSelectStage();
+}
+function updateSelectStage() {
+  if (selectedIds.size === 0) {
+    document.getElementById("select-stage").classList.add("hidden");
+    return;
+  }
+  document.getElementById("select-stage").classList.remove("hidden");
+  document.getElementById("selected-count").textContent = selectedIds.size;
+  const list = document.getElementById("selected-list");
+  list.innerHTML = [...selectedIds].map(id => {
+    const p = POSTS.find(x => x.id === id);
+    return `<div class="post-card selected"><div class="post-content">
+      <div class="author">\( {p.author} <span class="handle"> \){p.handle}</span></div>
+      <div class="timestamp">${p.date}</div>
+      <div class="text">${p.text.slice(0, 110)}…</div>
+    </div></div>`;
+  }).join("");
+}
+function backToSearch() { document.getElementById("select-stage").classList.add("hidden"); }
+function confirmAndShowPrices() {
+  document.getElementById("search-stage").classList.add("hidden");
+  document.getElementById("select-stage").classList.add("hidden");
+  document.getElementById("final-stage").classList.remove("hidden");
+  const container = document.getElementById("final-results");
+  container.innerHTML = [...selectedIds].map(id => {
+    const p = POSTS.find(x => x.id === id);
+    const postPrice = getPrice(p.date);
+    const before = getPrice(addDays(p.date, -1));
+    const after3 = getPrice(addDays(p.date, 3));
+    let delta = null, direction = "";
+    if (postPrice && after3) {
+      delta = ((after3 - postPrice) / postPrice * 100).toFixed(1);
+      direction = after3 > postPrice ? "up" : "down";
+    }
+    const outlineClass = direction === "up" ? "green" : (direction === "down" ? "red" : "");
+    return `<div class="post-card ${outlineClass}">
+      <div class="post-content">
+        <div class="author">\( {p.author} <span class="handle"> \){p.handle}</span></div>
+        <div class="timestamp">${p.date} ${p.time} UTC</div>
+        <div class="text">${p.text}</div>
+        <a href="${p.url}" target="_blank" rel="noopener">View on X →</a>
+      </div>
+      <div class="price-panel">
+        <h4>XRP Price Context</h4>
+        <div class="price-row"><span class="price-label">1 day before</span><span class="price-value">\( {before ? " \)" + before.toFixed(2) : "n/a"}</span></div>
+        <div class="price-row"><span class="price-label">At post time</span><span class="price-value">\( {postPrice ? " \)" + postPrice.toFixed(2) : "n/a"}</span></div>
+        <div class="price-row"><span class="price-label">3 days after</span><span class="price-value">\( {after3 ? " \)" + after3.toFixed(2) : "n/a"}</span></div>
+        ${delta !== null ? `<div class="delta \( {direction}"> \){direction === "up" ? "▲" : "▼"} ${Math.abs(delta)}% in 3 days</div>` : `<div class="delta">Price data incomplete</div>`}
+      </div>
+    </div>`;
+  }).join("");
+}
+function resetApp() {
+  selectedIds.clear();
+  document.getElementById("final-stage").classList.add("hidden");
+  document.getElementById("search-stage").classList.remove("hidden");
+  document.getElementById("search-results").innerHTML = "";
+  runSearch();
+}
+runSearch();
+</script>
+</body>
+</html>
