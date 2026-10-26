@@ -1,267 +1,563 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>XRP Hype Tracker – Posts vs Price</title>
-
-  <!-- Twitter / Open Graph cards (makes the link look good on X) -->
-  <meta property="og:title" content="XRP Hype Tracker" />
-  <meta property="og:description" content="See XRP hype posts next to the actual price action. Green = price went up after the post." />
-  <meta property="og:type" content="website" />
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="XRP Hype Tracker" />
-  <meta name="twitter:description" content="Hype posts vs real XRP price movement. Select posts → see the numbers." />
-
-  <style>
-    :root {
-      --bg: #0b0d12;
-      --card: #14171f;
-      --border: #252a36;
-      --text: #e8ecf4;
-      --muted: #8b93a7;
-      --accent: #00d4aa;
-      --green: #22c55e;
-      --red: #ef4444;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.5;
-      padding: 16px;
-      max-width: 1100px;
-      margin: 0 auto;
-      min-height: 100vh;
-    }
-    h1 { font-size: 1.6rem; margin-bottom: 4px; }
-    .subtitle { color: var(--muted); font-size: 0.95rem; margin-bottom: 20px; }
-    .controls {
-      display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;
-      background: var(--card); padding: 14px; border-radius: 12px; border: 1px solid var(--border);
-    }
-    select, input[type="text"] {
-      background: #0f1219; border: 1px solid var(--border); color: var(--text);
-      padding: 10px 12px; border-radius: 8px; font-size: 14px; flex: 1; min-width: 140px;
-    }
-    button {
-      background: var(--accent); color: #000; border: none; padding: 10px 18px;
-      border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px;
-      white-space: nowrap;
-    }
-    button:hover { opacity: 0.92; }
-    button.secondary { background: #252a36; color: var(--text); }
-    .results { display: grid; gap: 14px; }
-    .post-card {
-      background: var(--card); border: 2px solid var(--border); border-radius: 12px;
-      padding: 14px; display: flex; gap: 14px; transition: border-color 0.2s;
-    }
-    .post-card.selected { border-color: var(--accent); }
-    .post-card.green { border-color: var(--green); box-shadow: 0 0 0 1px var(--green); }
-    .post-card.red { border-color: var(--red); box-shadow: 0 0 0 1px var(--red); }
-    .checkbox { margin-top: 3px; transform: scale(1.15); }
-    .post-content { flex: 1; min-width: 0; }
-    .author { font-weight: 600; }
-    .handle { color: var(--muted); font-size: 0.9em; }
-    .timestamp { color: var(--muted); font-size: 0.82em; margin: 2px 0 8px; }
-    .text { margin-bottom: 8px; white-space: pre-wrap; font-size: 0.95rem; }
-    .price-panel {
-      min-width: 200px; background: #0f1219; border-radius: 10px; padding: 12px;
-      border: 1px solid var(--border); font-size: 0.88em;
-    }
-    .price-panel h4 { margin-bottom: 8px; font-size: 0.9em; color: var(--accent); }
-    .price-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
-    .price-label { color: var(--muted); }
-    .price-value { font-weight: 600; }
-    .delta { font-size: 0.85em; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
-    .delta.up { color: var(--green); }
-    .delta.down { color: var(--red); }
-    .hidden { display: none !important; }
-    .empty { text-align: center; color: var(--muted); padding: 40px 10px; }
-    .stage-title { font-size: 1.15rem; margin: 20px 0 10px; }
-    #confirm-bar {
-      position: sticky; bottom: 0; background: var(--card); border-top: 1px solid var(--border);
-      padding: 14px 16px; display: flex; justify-content: space-between; align-items: center;
-      gap: 12px; margin: 20px -16px -16px; flex-wrap: wrap;
-    }
-    a { color: var(--accent); text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    @media (max-width: 640px) {
-      .post-card { flex-direction: column; }
-      .price-panel { min-width: 100%; }
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Hype vs Price – did the post age well?</title>
+<meta name="description" content="Paste a hype post. See the real price chart around it. Green = it pumped. Red = it dumped." />
+<meta property="og:title" content="Hype vs Price" />
+<meta property="og:description" content="Paste a hype post, see what the price actually did. Green = pumped, red = dumped." />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:title" content="Hype vs Price" />
+<meta name="twitter:description" content="Hype posts vs real price action." />
+<style>
+:root{--bg:#0b0d12;--card:#14171f;--border:#252a36;--text:#e8ecf4;--muted:#8b93a7;--accent:#00d4aa;--green:#22c55e;--red:#ef4444}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.5;padding:16px;max-width:1100px;margin:0 auto;min-height:100vh}
+h1{font-size:1.6rem;margin-bottom:4px}
+.subtitle{color:var(--muted);font-size:.95rem;margin-bottom:18px}
+.panel{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px}
+.row{display:flex;flex-wrap:wrap;gap:10px}
+textarea,input,select{background:#0f1219;border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:8px;font-size:14px;font-family:inherit;flex:1;min-width:140px}
+textarea{width:100%;resize:vertical}
+#urls{border:2px solid var(--accent);box-shadow:0 0 0 3px rgba(0,212,170,.12)}
+#urls:focus{outline:none;box-shadow:0 0 0 4px rgba(0,212,170,.28)}
+#addBtn{width:100%;margin-top:10px;padding:12px 18px;font-size:15px}
+label{display:block;font-size:.8rem;color:var(--muted);margin:10px 0 4px}
+button{background:var(--accent);color:#000;border:none;padding:10px 18px;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px;white-space:nowrap}
+button:hover{opacity:.9}button:disabled{opacity:.5;cursor:wait}
+button.secondary{background:#252a36;color:var(--text)}
+button.small{padding:7px 12px;font-size:13px}
+details{margin-top:10px}summary{cursor:pointer;color:var(--muted);font-size:.88rem}
+.hint{color:var(--muted);font-size:.8rem;margin-top:6px}
+.error{color:var(--red);font-size:.88rem;margin-top:8px}
+#results{display:grid;gap:18px}
+.shot{background:var(--card);border:3px solid var(--border);border-radius:14px;padding:16px;position:relative}
+.shot.green{border-color:var(--green);box-shadow:0 0 0 1px var(--green),0 0 24px rgba(34,197,94,.18)}
+.shot.red{border-color:var(--red);box-shadow:0 0 0 1px var(--red),0 0 24px rgba(239,68,68,.18)}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:18px;align-items:center}
+.post{min-width:0}
+.embed{min-height:120px;display:flex;justify-content:center}
+.embed .twitter-tweet{margin:0 auto !important}
+.embed-loading{color:var(--muted);font-size:.85rem;padding:40px 0;text-align:center}
+.fallback{display:none}
+.post.noembed .fallback{display:block}
+.post.noembed .embed{display:none}
+.who{display:flex;gap:10px;align-items:center;margin-bottom:8px}
+.avatar{width:42px;height:42px;border-radius:50%;background:#252a36;display:flex;align-items:center;justify-content:center;font-weight:700;overflow:hidden;flex:none}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.author{font-weight:600}.handle{color:var(--muted);font-size:.88em}
+.ts{color:var(--muted);font-size:.8em;margin-bottom:8px}
+.text{white-space:pre-wrap;word-break:break-word;font-size:1rem;margin-bottom:8px}
+.src{font-size:.8em;color:var(--muted);word-break:break-all}
+.verdict{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.big{font-size:1.5rem;font-weight:800}.big.up{color:var(--green)}.big.down{color:var(--red)}
+.sub{color:var(--muted);font-size:.82rem}
+.chart svg{width:100%;height:auto;display:block}
+.foot{display:flex;justify-content:space-between;color:var(--muted);font-size:.72rem;margin-top:12px}
+.controls{display:flex;gap:8px 12px;flex-wrap:wrap;align-items:flex-end;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+.controls .f{display:flex;flex-direction:column}
+.controls label{margin:0 0 3px;font-size:.7rem}
+.controls select,.controls input{min-width:0;flex:none;padding:6px 8px;font-size:13px}
+.controls input.num{width:64px}
+.controls .sp{flex:1}
+.chips{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px;font-size:.8rem;color:var(--muted)}
+.chip i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
+.chip b.up{color:var(--green)}.chip b.down{color:var(--red)}
+.loading{color:var(--muted);padding:40px 0;text-align:center}
+.empty{text-align:center;color:var(--muted);padding:40px 10px}
+.disclaimer{color:var(--muted);font-size:.75rem;text-align:center;margin:26px 0 10px}
+#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#252a36;padding:10px 16px;border-radius:8px;font-size:.88rem;opacity:0;pointer-events:none;transition:opacity .2s;z-index:50}
+#toast.on{opacity:1}
+@media(max-width:700px){.grid{grid-template-columns:1fr}}
+</style>
 </head>
 <body>
+<h1>Hype vs Price</h1>
+<p class="subtitle">Paste a hype post from X → see what the price actually did. Crypto, stocks or the overall market.</p>
 
-  <h1>XRP Hype Tracker</h1>
-  <p class="subtitle">Search hype posts → select → see real price action next to them</p>
-
-  <div id="search-stage">
-    <div class="controls">
-      <select id="month-filter">
-        <option value="all">All (Jul–Sep 2026)</option>
-        <option value="2026-07">July 2026</option>
-        <option value="2026-08">August 2026</option>
-        <option value="2026-09">September 2026</option>
-      </select>
-      <input type="text" id="keyword" placeholder="blow up, moon, explode…" value="blow up OR moon OR explode">
-      <button onclick="runSearch()">Search</button>
-    </div>
-    <div id="search-results" class="results"></div>
+<div class="panel">
+  <label for="urls" style="margin-top:0">X post link(s) — the exact post time is detected automatically (one per line)</label>
+  <textarea id="urls" rows="2" placeholder="https://x.com/username/status/1234567890"></textarea>
+  <div class="row" style="margin-top:10px">
+    <select id="coin" style="max-width:230px">
+      <optgroup label="Crypto">
+        <option value="ripple|XRP">XRP</option>
+        <option value="bitcoin|BTC">Bitcoin</option>
+        <option value="ethereum|ETH">Ethereum</option>
+        <option value="solana|SOL">Solana</option>
+        <option value="dogecoin|DOGE">Dogecoin</option>
+        <option value="cardano|ADA">Cardano</option>
+        <option value="other">Other crypto (CoinGecko id)…</option>
+      </optgroup>
+      <optgroup label="Stocks">
+        <option value="stock">Stock / ETF (ticker)…</option>
+      </optgroup>
+      <optgroup label="Overall market">
+        <option value="market">Dow + S&amp;P 500 + Nasdaq</option>
+      </optgroup>
+    </select>
+    <input id="customCoin" style="display:none" />
+    <select id="range" style="max-width:190px" title="Chart window">
+      <option value="d">3 day view</option>
+      <option value="w" selected>1 week view</option>
+      <option value="m">1 month view</option>
+      <option value="q">3 month view</option>
+    </select>
   </div>
+  <button id="addBtn" onclick="addFromForm()">Compare</button>
+  <div id="formError" class="error"></div>
+</div>
 
-  <div id="select-stage" class="hidden">
-    <div class="stage-title">Selected (<span id="selected-count">0</span>)</div>
-    <div id="selected-list" class="results"></div>
-    <div id="confirm-bar">
-      <span>Load XRP price data for these posts?</span>
-      <div style="display:flex;gap:8px;">
-        <button class="secondary" onclick="backToSearch()">← Back</button>
-        <button onclick="confirmAndShowPrices()">Confirm & Show Prices</button>
-      </div>
-    </div>
-  </div>
+<div class="row" id="globalActions" style="margin-bottom:14px;display:none">
+  <button class="secondary small" onclick="copyLink()">🔗 Copy link to this comparison</button>
+  <button class="secondary small" onclick="shareOnX()">Share on X</button>
+  <button class="secondary small" onclick="clearAll()">Clear all</button>
+</div>
 
-  <div id="final-stage" class="hidden">
-    <div class="stage-title">Posts + XRP Price Action</div>
-    <p style="color:var(--muted);margin-bottom:14px;font-size:0.9rem;">
-      Green outline = price rose in the 3 days after · Red = no meaningful upside
-    </p>
-    <div id="final-results" class="results"></div>
-    <button class="secondary" style="margin-top:20px" onclick="resetApp()">Start Over</button>
-  </div>
+<div id="results"></div>
+<div class="empty" id="empty">Paste an X post link above to get started.</div>
+<p class="disclaimer">Crypto prices from CoinGecko (fallback: CryptoCompare). Stock and index prices from Yahoo Finance; stocks only trade during market hours, so weekend posts are measured from the last close. Price moves after a post are not proof the post caused them. Educational only — not financial advice.</p>
+<div id="toast"></div>
 
+<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 <script>
-const POSTS = [
-  { id: "53", author: "Jenny", handle: "@Jenny_Solstice", date: "2026-07-06", time: "17:56", text: "$XRP IS GONNA CREATE NEW WAVE OF MILLIONAIRES SOON\nXRP IS ABOUT TO SHOCK THE MARKET\nMOST PEOPLE ARE NOT READY\nPRESSURE HAS BEEN BUILDING\nWHEN IT RELEASES IT WILL MELT FACES", url: "https://x.com/Jenny_Solstice/status/2074190677592944800" },
-  { id: "28", author: "XRPMoonWalk", handle: "@XRPMoonWalkK", date: "2026-08-26", time: "18:13", text: "$XRP is going to blow their minds 😎\n#Welcome", url: "https://x.com/XRPMoonWalkK/status/2092676864825254135" },
-  { id: "27", author: "XRPMaxi1965", handle: "@XRPMaxi1965", date: "2026-08-26", time: "20:55", text: "Absolutely Stern. Time to blow this up #XRP", url: "https://x.com/XRPMaxi1965/status/2092717698795044956" },
-  { id: "51", author: "JAVON⚡️MARKS", handle: "@JavonTM1", date: "2026-09-05", time: "14:56", text: "$XRP, right after spotting the breakout… went on to absolutely surge soon after, adding nearly +55% and right now as this breakout holds, prices look SET FOR HIGHER!\nThis breakout can lead into another near 140% move back to $3.50…", url: "https://x.com/JavonTM1/status/2096251217055781235" },
-  { id: "55", author: "Cleophee_Lune", handle: "@Cleophee_Lune", date: "2026-09-20", time: "23:22", text: "$XRP is about to repeat 2017.\nWe're now sitting on the exact macro support that launched the last legendary explosion.\nNext stops: $1.50-$2.00 → $3.20-$5.50 → $6.00-$10.00", url: "https://x.com/Cleophee_Lune/status/2101814363615277089" },
-  { id: "54", author: "Natasha", handle: "@Natashaxrp", date: "2026-09-22", time: "14:35", text: "$XRP is about to repeat 2017\nWe're now sitting on the exact macro support that launched the last legendary explosion.\nNext stops: Major Resistance → $1.50-$2.00 … Parabolic extension → $6.00-$10.00", url: "https://x.com/Natashaxrp/status/2102406534722662427" },
-  { id: "39", author: "peteskeetpete", handle: "@peteskeetpete", date: "2026-09-27", time: "17:01", text: "AGAIN, I am going to reiterate for XRP, this is the same scenario as 1 DOLLAR.\nEXCEPT, this next move is not going to be some measly 50 cents, XRP is going to BLOW the TOP OFF.", url: "https://x.com/peteskeetpete/status/2104255064051458529" },
-  { id: "52", author: "JAVON⚡️MARKS", handle: "@JavonTM1", date: "2026-09-27", time: "23:38", text: "$XRP, let's not sit here and ignore the fact that prices have DISPLAYED THE EXACT BULLISH BREAKOUT we've been watching… TO $15+!\nPrices could soar another +874%…", url: "https://x.com/JavonTM1/status/2104355139431838101" },
-  { id: "38", author: "Zeltima", handle: "@zeltima", date: "2026-09-28", time: "12:14", text: "$XRP put in another higher low against $BTC on the 1D. 1W flipped resistance into support. Not following a $BTC pump, $XRP is poised to fucking blow.", url: "https://x.com/zeltima/status/2104545276468048355" },
-  { id: "34", author: "peteskeetpete", handle: "@peteskeetpete", date: "2026-09-30", time: "09:27", text: "sell wall built up at $1.52 for XRP, let’s blow through it. we’ve got places to be and things to see.", url: "https://x.com/peteskeetpete/status/2105228005760983474" }
-];
+const DAY = 86400000, HOUR = 3600000;
+const RANGES = { d:[1,3,"3 days"], w:[1,7,"1 week"], m:[7,30,"1 month"], q:[14,90,"3 months"] };
+let items = [];            // {id,u,t,a,h,p,ts,c,sym,k,rb,ra,price?,cur?,err?}
+let nextId = 1;
+const seriesCache = {};
 
-const PRICE_DATA = {
-  "2026-07-05": 1.16, "2026-07-06": 1.14, "2026-07-07": 1.11, "2026-07-08": 1.09, "2026-07-09": 1.09,
-  "2026-08-25": 1.49, "2026-08-26": 1.43, "2026-08-27": 1.45, "2026-08-28": 1.38, "2026-08-29": 1.40,
-  "2026-09-04": 1.40, "2026-09-05": 1.41, "2026-09-06": 1.42, "2026-09-07": 1.39, "2026-09-08": 1.42,
-  "2026-09-19": 1.41, "2026-09-20": 1.41, "2026-09-21": 1.54, "2026-09-22": 1.57, "2026-09-23": 1.50,
-  "2026-09-24": 1.53, "2026-09-25": 1.57, "2026-09-26": 1.53, "2026-09-27": 1.52, "2026-09-28": 1.50,
-  "2026-09-29": 1.49, "2026-09-30": 1.49, "2026-10-01": 1.49, "2026-10-02": 1.48, "2026-10-03": 1.49
-};
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function toast(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("on"); setTimeout(()=>t.classList.remove("on"),2200); }
 
-function getPrice(dateStr) { return PRICE_DATA[dateStr] || null; }
-function addDays(dateStr, days) {
-  const d = new Date(dateStr + "T12:00:00Z");
-  d.setUTCDate(d.getUTCDate() + days);
-  return d.toISOString().slice(0, 10);
+$("coin").addEventListener("change", e => {
+  const v = e.target.value, c = $("customCoin");
+  c.style.display = (v === "other" || v === "stock") ? "block" : "none";
+  c.placeholder = v === "stock" ? "Ticker, e.g. TSLA, NVDA, SPY" : "CoinGecko id, e.g. chainlink";
+});
+
+/* ---------- helpers ---------- */
+function parseXLink(url){
+  const m = url.match(/(?:^|\/\/)(?:www\.|mobile\.)?(?:x|twitter)\.com\/([^\/?#]+)\/status(?:es)?\/(\d+)/i);
+  return m ? { handle: m[1], id: m[2] } : null;
+}
+function tweetTime(id){ return Number((BigInt(id) >> 22n) + 1288834974657n); }
+function fmtUTC(ts){ return new Date(ts).toISOString().replace("T"," ").slice(0,16) + " UTC"; }
+function inputUTC(ts){ return new Date(ts).toISOString().slice(0,16); }
+const CUR = { USD:"$", EUR:"€", GBP:"£", JPY:"¥", CAD:"C$", AUD:"A$", CHF:"CHF ", HKD:"HK$", KRW:"₩", INR:"₹" };
+function fmtPrice(p, cur){
+  if(p==null) return "n/a";
+  const sym = cur === "pts" ? "" : cur ? (CUR[cur] || cur + " ") : "$";
+  return sym + (p >= 1000 ? Math.round(p).toLocaleString("en-US") : p >= 100 ? p.toFixed(1) : p >= 1 ? p.toFixed(2) : p.toFixed(4));
+}
+function pct(a,b){ return (b/a - 1) * 100; }
+function fmtPct(v){ return (v>=0?"+":"") + v.toFixed(1) + "%"; }
+function clamp(n, lo, hi, d){ n = Number(n); return isFinite(n) ? Math.min(hi, Math.max(lo, n)) : d; }
+function rangeKey(it){ for(const k in RANGES) if(RANGES[k][0]===it.rb && RANGES[k][1]===it.ra) return k; return "c"; }
+function rangeLabel(it){ const k = rangeKey(it); return k==="c" ? `−${it.rb}d to +${it.ra}d` : `${RANGES[k][2]} (−${it.rb}d to +${it.ra}d)`; }
+const INDEX_NAMES = { "^DJI":"Dow Jones", "^GSPC":"S&P 500", "^IXIC":"Nasdaq Composite" };
+function symOf(it){ if(it.k === "market") return "Dow · S&P 500 · Nasdaq"; return it.k === "stock" ? (INDEX_NAMES[it.c] || it.c.toUpperCase()) : (it.sym || it.c).toUpperCase(); }
+
+async function fetchJSON(url, ms=9000){
+  const ctl = new AbortController(); const to = setTimeout(()=>ctl.abort(), ms);
+  try{ const r = await fetch(url,{signal:ctl.signal}); if(!r.ok) throw new Error("HTTP "+r.status); return await r.json(); }
+  finally{ clearTimeout(to); }
 }
 
-function runSearch() {
-  const month = document.getElementById("month-filter").value;
-  const keyword = document.getElementById("keyword").value.toLowerCase();
-  const keywords = keyword.split(/\s+OR\s+/i).map(k => k.trim()).filter(Boolean);
-  let filtered = POSTS.filter(p => {
-    if (month !== "all" && !p.date.startsWith(month)) return false;
-    if (keywords.length === 0) return true;
-    const text = (p.text + " " + p.author).toLowerCase();
-    return keywords.some(k => text.includes(k));
-  });
-  const container = document.getElementById("search-results");
-  if (filtered.length === 0) {
-    container.innerHTML = `<div class="empty">No posts matched. Try different filters.</div>`;
-    return;
+/* ---------- price data ---------- */
+async function getCrypto(cgId, sym, from, to){
+  let pts = null;
+  try{
+    const d = await fetchJSON(`https://api.coingecko.com/api/v3/coins/${encodeURIComponent(cgId)}/market_chart/range?vs_currency=usd&from=${Math.floor(from/1000)}&to=${Math.floor(to/1000)}`);
+    if(d.prices && d.prices.length > 5) pts = d.prices.map(([t,p])=>[t,p]);
+  }catch(e){}
+  if(!pts && sym){
+    try{
+      const spanDays = (to - from)/DAY, daily = spanDays > 80;
+      const n = daily ? Math.ceil(spanDays) + 1 : Math.ceil((to - from)/HOUR) + 1;
+      const d = await fetchJSON(`https://min-api.cryptocompare.com/data/v2/${daily?"histoday":"histohour"}?fsym=${sym}&tsym=USD&limit=${Math.min(2000,n)}&toTs=${Math.floor(to/1000)}`);
+      const arr = d && d.Data && d.Data.Data;
+      if(arr && arr.length > 5) pts = arr.map(x=>[x.time*1000, x.close]).filter(x=>x[0] >= from - DAY && x[1] > 0);
+    }catch(e){}
   }
-  container.innerHTML = filtered.map(p => `
-    <div class="post-card" id="card-${p.id}">
-      <input type="checkbox" class="checkbox" data-id="\( {p.id}" onchange="toggleSelect(' \){p.id}')">
-      <div class="post-content">
-        <div class="author">\( {p.author} <span class="handle"> \){p.handle}</span></div>
-        <div class="timestamp">${p.date} ${p.time} UTC</div>
-        <div class="text">${p.text}</div>
-        <a href="${p.url}" target="_blank" rel="noopener">View on X →</a>
+  if(!pts) throw new Error("Couldn't load price data (rate limit, old date, or network). Try again in a minute.");
+  return { pts, cur:"USD" };
+}
+
+async function getStock(ticker, from, to){
+  const spanDays = (to - from)/DAY;
+  const interval = (spanDays <= 45 && Date.now() - from < 700*DAY) ? "1h" : "1d";
+  const base = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?period1=${Math.floor(from/1000)}&period2=${Math.floor(to/1000)}&interval=${interval}`;
+  // Yahoo doesn't send CORS headers, so fall back to public relays if the direct call is blocked.
+  const q = `symbol=${encodeURIComponent(ticker)}&period1=${Math.floor(from/1000)}&period2=${Math.floor(to/1000)}&interval=${interval}`;
+  const tries = [
+    ...(location.protocol === "file:" ? [] : ["/api/stock?" + q]),   // your own tiny proxy, if deployed (most reliable)
+    base,
+    "https://corsproxy.io/?url=" + encodeURIComponent(base),
+    "https://api.allorigins.win/raw?url=" + encodeURIComponent(base),
+    "https://api.codetabs.com/v1/proxy?quest=" + encodeURIComponent(base)
+  ];
+  let notFound = false;
+  for(const u of tries){
+    try{
+      const d = await fetchJSON(u, 10000);
+      const ch = d && d.chart;
+      if(ch && ch.error){ notFound = true; break; }
+      const r = ch && ch.result && ch.result[0];
+      if(!r || !r.timestamp) continue;
+      const close = r.indicators.quote[0].close;
+      const pts = r.timestamp.map((t,i)=>[t*1000, close[i]]).filter(p=>p[1] != null);
+      if(pts.length > 2) return { pts, cur: ticker.startsWith("^") ? "pts" : ((r.meta && r.meta.currency) || "USD") };
+    }catch(e){}
+  }
+  throw new Error(notFound ? `Couldn't find “${ticker.toUpperCase()}”. Check the ticker.` : "Couldn't load stock data right now (the data relay may be busy). Try again in a minute.");
+}
+
+async function getSeries(it){
+  const from = it.ts - it.rb*DAY, to = Math.min(it.ts + it.ra*DAY, Date.now());
+  const key = [it.k, it.c, from, to].join("|");
+  if(seriesCache[key]) return seriesCache[key];
+  let r;
+  if(it.k === "market"){
+    const idx = [["^DJI","Dow Jones"],["^GSPC","S&P 500"],["^IXIC","Nasdaq"]];
+    const res = await Promise.allSettled(idx.map(([t]) => getStock(t, from, to)));
+    const multi = res.map((x,i)=> x.status === "fulfilled" ? { name: idx[i][1], pts: x.value.pts } : null).filter(Boolean);
+    if(!multi.length) throw res[0].reason;
+    multi.forEach(m => m.pts.sort((a,b)=>a[0]-b[0]));
+    r = { pts: multi[0].pts, cur: "pts", multi };
+  }else{
+    r = it.k === "stock" ? await getStock(it.c, from, to) : await getCrypto(it.c, it.sym, from, to);
+  }
+  r.pts.sort((a,b)=>a[0]-b[0]);
+  return (seriesCache[key] = r);
+}
+
+// Price at the moment of the post. Crypto trades 24/7 so use the closest point; stocks use the last trade at or before the post.
+function basePrice(it, pts){
+  if(it.k !== "crypto"){
+    let b = null;
+    for(const p of pts){ if(p[0] <= it.ts) b = p; else break; }
+    if(b) return b[1];
+    return pts.length && pts[0][0] - it.ts <= 4*DAY ? pts[0][1] : null;
+  }
+  let best=null, bd=Infinity;
+  for(const p of pts){ const d=Math.abs(p[0]-it.ts); if(d<bd){bd=d;best=p;} }
+  return best && bd <= 6*HOUR ? best[1] : null;
+}
+
+/* ---------- adding posts ---------- */
+async function tryLoadTweet(id){
+  try{
+    const token = ((Number(id)/1e15)*Math.PI).toString(36).replace(/(0+|\.)/g,"");
+    const d = await fetchJSON(`https://cdn.syndication.twimg.com/tweet-result?id=${id}&lang=en&token=${token}`, 6000);
+    if(!d || !d.text) return null;
+    return {
+      text: String(d.text).replace(/https:\/\/t\.co\/\S+/g,"").trim(),
+      name: d.user && d.user.name, handle: d.user && d.user.screen_name,
+      avatar: d.user && d.user.profile_image_url_https
+    };
+  }catch(e){ return null; }
+}
+
+async function addFromForm(){
+  $("formError").textContent = "";
+  const lines = $("urls").value.split(/\s*\n\s*/).map(s=>s.trim()).filter(Boolean);
+  if(!lines.length){ $("formError").textContent = "Paste at least one X post link."; return; }
+  const coinVal = $("coin").value;
+  let kind = "crypto", cgId, sym = "";
+  if(coinVal === "other"){ cgId = $("customCoin").value.trim().toLowerCase(); if(!cgId){ $("formError").textContent="Enter a CoinGecko id."; return; } }
+  else if(coinVal === "stock"){ kind = "stock"; cgId = $("customCoin").value.trim().toUpperCase(); if(!cgId){ $("formError").textContent="Enter a stock ticker, e.g. TSLA."; return; } }
+  else if(coinVal === "market"){ kind = "market"; cgId = "MARKET"; }
+  else [cgId, sym] = coinVal.split("|");
+  const [rb, ra] = RANGES[$("range").value];
+
+  $("addBtn").disabled = true;
+  try{
+    for(const url of lines){
+      const x = parseXLink(url);
+      if(!x){ $("formError").textContent = "Only X (Twitter) post links are supported, e.g. https://x.com/name/status/123…"; break; }
+      const ts = tweetTime(x.id);
+      if(ts > Date.now()){ $("formError").textContent = "That post time is in the future."; break; }
+      const it = { u:url, t:"", a:"", h:"@" + x.handle, p:"", ts, c:cgId, sym, k:kind, rb, ra };
+      const info = await tryLoadTweet(x.id);
+      if(info){ it.t = info.text; it.a = info.name || ""; it.p = info.avatar || ""; if(info.handle) it.h = "@" + info.handle; }
+      if(!it.a) it.a = x.handle;
+      it.id = nextId++;
+      items.unshift(it);
+    }
+    renderAll(); syncHash();
+    if(!$("formError").textContent) $("urls").value = "";
+  } finally { $("addBtn").disabled = false; }
+}
+
+/* ---------- chart ---------- */
+function chartSVG(it, pts, cls){
+  const ts = it.ts, cur = it.cur;
+  const W=640,H=270,pl=10,pr=62,pt=18,pb=30;
+  const x0 = ts - it.rb*DAY, x1 = ts + it.ra*DAY;
+  const X = t => pl + (t-x0)/(x1-x0)*(W-pl-pr);
+  let mn = Math.min(...pts.map(p=>p[1])), mx = Math.max(...pts.map(p=>p[1]));
+  const pad = (mx-mn)*0.12 || mx*0.02; mn -= pad; mx += pad;
+  const Y = v => pt + (1 - (v-mn)/(mx-mn))*(H-pt-pb);
+  const col = cls==="green" ? "#22c55e" : cls==="red" ? "#ef4444" : "#00d4aa";
+  const before = pts.filter(p=>p[0] <= ts), after = pts.filter(p=>p[0] >= ts);
+  const path = arr => arr.map((p,i)=>(i?"L":"M")+X(p[0]).toFixed(1)+" "+Y(p[1]).toFixed(1)).join(" ");
+  const pp = basePrice(it, pts);
+  const last = pts[pts.length-1];
+  let s = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,Segoe UI,Roboto,sans-serif">`;
+  if(last[0] < x1) s += `<rect x="${X(last[0])}" y="${pt}" width="${Math.max(0,W-pr-X(last[0]))}" height="${H-pt-pb}" fill="#ffffff" opacity="0.04"/>`;
+  for(let i=0;i<=3;i++){ const v = mn + (mx-mn)*i/3, y = Y(v);
+    s += `<line x1="${pl}" x2="${W-pr}" y1="${y}" y2="${y}" stroke="#252a36" stroke-width="1"/><text x="${W-pr+6}" y="${y+4}" fill="#8b93a7" font-size="11">${fmtPrice(v,cur)}</text>`; }
+  // x ticks: pick a step so there are at most ~9 labels
+  const span = it.rb + it.ra;
+  const step = [1,2,3,5,7,10,14,15,30].find(st => span/st <= 9) || 30;
+  const offs = [0];
+  for(let o=step; o<=it.ra; o+=step) offs.push(o);
+  for(let o=-step; o>=-it.rb; o-=step) offs.push(o);
+  offs.forEach(o => { const x = X(ts + o*DAY);
+    s += `<line x1="${x}" x2="${x}" y1="${pt}" y2="${H-pb}" stroke="#1b2029" stroke-width="1"/><text x="${x}" y="${H-10}" fill="${o===0?'#e8ecf4':'#8b93a7'}" font-size="11" text-anchor="middle">${o===0?"Post":(o>0?"+":"")+o+"d"}</text>`; });
+  if(pp != null) s += `<line x1="${X(ts)}" x2="${W-pr}" y1="${Y(pp)}" y2="${Y(pp)}" stroke="${col}" stroke-width="1" stroke-dasharray="4 4" opacity="0.6"/>`;
+  if(after.length > 1) s += `<path d="${path(after)} L${X(after[after.length-1][0])} ${H-pb} L${X(after[0][0])} ${H-pb} Z" fill="${col}" opacity="0.12"/>`;
+  if(before.length > 1) s += `<path d="${path(before)}" fill="none" stroke="#8b93a7" stroke-width="2" stroke-linejoin="round"/>`;
+  if(after.length > 1) s += `<path d="${path(after)}" fill="none" stroke="${col}" stroke-width="2.4" stroke-linejoin="round"/>`;
+  s += `<line x1="${X(ts)}" x2="${X(ts)}" y1="${pt}" y2="${H-pb}" stroke="#e8ecf4" stroke-width="1.5" stroke-dasharray="3 3"/>`;
+  if(pp != null) s += `<circle cx="${X(ts)}" cy="${Y(pp)}" r="5" fill="#e8ecf4" stroke="${col}" stroke-width="2"/>`;
+  s += `<circle cx="${X(last[0])}" cy="${Y(last[1])}" r="4" fill="${col}"/>`;
+  return s + `</svg>`;
+}
+
+const MCOLORS = ["#60a5fa","#fbbf24","#c084fc"];
+function marketStats(it){
+  return (it.multi||[]).map((m,i) => {
+    const b = basePrice(it, m.pts), last = m.pts[m.pts.length-1];
+    return { name:m.name, color:MCOLORS[i%3], pts:m.pts, b, ch: b != null && last[0] > it.ts + 2*HOUR ? pct(b, last[1]) : null };
+  });
+}
+function chartMultiSVG(it, series){
+  const ts = it.ts, W=640,H=270,pl=10,pr=50,pt=18,pb=30;
+  const x0 = ts - it.rb*DAY, x1 = ts + it.ra*DAY;
+  const X = t => pl + (t-x0)/(x1-x0)*(W-pl-pr);
+  const lines = series.filter(m => m.b != null).map(m => ({ ...m, p: m.pts.map(p => [p[0], (p[1]/m.b - 1)*100]) }));
+  let mn = 0, mx = 0;
+  lines.forEach(l => l.p.forEach(p => { mn = Math.min(mn, p[1]); mx = Math.max(mx, p[1]); }));
+  const pad = (mx-mn)*0.15 || 0.5; mn -= pad; mx += pad;
+  const Y = v => pt + (1 - (v-mn)/(mx-mn))*(H-pt-pb);
+  let s = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,Segoe UI,Roboto,sans-serif">`;
+  for(let i=0;i<=3;i++){ const v = mn + (mx-mn)*i/3, y = Y(v);
+    s += `<line x1="${pl}" x2="${W-pr}" y1="${y}" y2="${y}" stroke="#252a36" stroke-width="1"/><text x="${W-pr+6}" y="${y+4}" fill="#8b93a7" font-size="11">${v>=0?"+":""}${v.toFixed(1)}%</text>`; }
+  const span = it.rb + it.ra;
+  const step = [1,2,3,5,7,10,14,15,30].find(st => span/st <= 9) || 30;
+  const offs = [0];
+  for(let o=step; o<=it.ra; o+=step) offs.push(o);
+  for(let o=-step; o>=-it.rb; o-=step) offs.push(o);
+  offs.forEach(o => { const x = X(ts + o*DAY);
+    s += `<line x1="${x}" x2="${x}" y1="${pt}" y2="${H-pb}" stroke="#1b2029" stroke-width="1"/><text x="${x}" y="${H-10}" fill="${o===0?'#e8ecf4':'#8b93a7'}" font-size="11" text-anchor="middle">${o===0?"Post":(o>0?"+":"")+o+"d"}</text>`; });
+  s += `<line x1="${pl}" x2="${W-pr}" y1="${Y(0)}" y2="${Y(0)}" stroke="#8b93a7" stroke-width="1" stroke-dasharray="4 4" opacity="0.6"/>`;
+  const path = arr => arr.map((p,i)=>(i?"L":"M")+X(p[0]).toFixed(1)+" "+Y(p[1]).toFixed(1)).join(" ");
+  lines.forEach(l => {
+    const bef = l.p.filter(p=>p[0] <= ts), aft = l.p.filter(p=>p[0] >= ts);
+    if(bef.length > 1) s += `<path d="${path(bef)}" fill="none" stroke="${l.color}" stroke-width="1.8" opacity="0.4" stroke-linejoin="round"/>`;
+    if(aft.length > 1) s += `<path d="${path(aft)}" fill="none" stroke="${l.color}" stroke-width="2.4" stroke-linejoin="round"/>`;
+    const e = l.p[l.p.length-1]; s += `<circle cx="${X(e[0])}" cy="${Y(e[1])}" r="4" fill="${l.color}"/>`;
+  });
+  s += `<line x1="${X(ts)}" x2="${X(ts)}" y1="${pt}" y2="${H-pb}" stroke="#e8ecf4" stroke-width="1.5" stroke-dasharray="3 3"/>`;
+  return s + `</svg>`;
+}
+
+/* ---------- card rendering ---------- */
+function controlsHTML(it){
+  const rk = rangeKey(it);
+  const opt = (k, label) => `<option value="${k}" ${rk===k?"selected":""}>${label}</option>`;
+  return `
+    <div class="f"><label>Window</label>
+      <select onchange="setRange(${it.id}, this.value)">${opt("d","3 days")}${opt("w","1 week")}${opt("m","1 month")}${opt("q","3 months")}${opt("c","Custom…")}</select></div>
+    ${rk==="c" ? `
+    <div class="f"><label>Days before</label><input class="num" type="number" min="0" max="365" value="${it.rb}" onchange="setCustom(${it.id}, this.value, null)"></div>
+    <div class="f"><label>Days after</label><input class="num" type="number" min="1" max="365" value="${it.ra}" onchange="setCustom(${it.id}, null, this.value)"></div>` : ""}
+    <div class="f"><label>Post time (UTC)</label>
+      <input type="datetime-local" value="${inputUTC(it.ts)}" onchange="setTime(${it.id}, this.value)"></div>
+    <span class="sp"></span>
+    <button class="small secondary" onclick="copyCard(${it.id})">🔗 Copy link</button>
+    <button class="small secondary" onclick="shareCard(${it.id})">Share on X</button>
+    <button class="small secondary" onclick="removeItem(${it.id})">✕</button>`;
+}
+function footHTML(it){ return `<span>${esc(symOf(it))} · hourly/daily · ${rangeLabel(it)}</span><span>Hype vs Price</span>`; }
+
+function cardHTML(it){
+  const initial = esc((it.a||"?").trim().charAt(0).toUpperCase());
+  const avatar = it.p ? `<img src="${esc(it.p)}" alt="" onerror="this.remove()">` : "";
+  return `
+  <div class="grid">
+    <div class="post">
+      <div class="embed"><div class="embed-loading">Loading post…</div></div>
+      <div class="fallback">
+        <div class="who"><div class="avatar">${avatar || initial}</div>
+          <div><div class="author">${esc(it.a)}</div><div class="handle">${esc(it.h)}</div></div></div>
+        <div class="ts tsv">${fmtUTC(it.ts)}</div>
+        ${it.t ? `<div class="text">${esc(it.t)}</div>` : `<div class="text" style="color:var(--muted)">(couldn\u2019t load this post here — open the link below to view it)</div>`}
+        <div class="src">${esc(it.u)}</div>
       </div>
     </div>
-  `).join("");
+    <div class="chartwrap"><div class="loading">Loading ${esc(symOf(it))} price data…</div></div>
+  </div>
+  <div class="foot">${footHTML(it)}</div>
+  <div class="controls">${controlsHTML(it)}</div>`;
 }
 
-const selectedIds = new Set();
-function toggleSelect(id) {
-  const card = document.getElementById(`card-${id}`);
-  if (selectedIds.has(id)) {
-    selectedIds.delete(id);
-    card.classList.remove("selected");
-  } else {
-    selectedIds.add(id);
-    card.classList.add("selected");
+function fillChart(it){
+  const el = document.getElementById("card-"+it.id); if(!el) return;
+  const wrap = el.querySelector(".chartwrap");
+  if(it.err){ wrap.innerHTML = `<div class="loading" style="color:var(--red)">${esc(it.err)}<br><button class="small secondary" style="margin-top:10px" onclick="retry(${it.id})">Retry</button></div>`; el.classList.remove("green","red"); return; }
+  if(it.k === "market"){ fillMarket(it, el, wrap); return; }
+  const pts = it.price, ts = it.ts;
+  const postP = basePrice(it, pts);
+  const last = pts[pts.length-1];
+  const ok = postP != null && last[0] > ts + 2*HOUR;
+  const ch = ok ? pct(postP, last[1]) : null;
+  const cls = ch == null ? "" : ch >= 0 ? "green" : "red";
+  el.classList.remove("green","red"); if(cls) el.classList.add(cls);
+  const daysElapsed = (last[0] - ts)/DAY;
+  const full = ts + it.ra*DAY <= Date.now() + HOUR;
+  const dayWord = it.ra === 1 ? "day" : "days";
+  wrap.innerHTML = `
+    <div class="verdict">
+      ${ch != null ? `<span class="big ${ch>=0?"up":"down"}">${ch>=0?"▲":"▼"} ${fmtPct(ch)}</span><span class="sub">${full ? it.ra + " " + dayWord + " after the post" : "so far (" + daysElapsed.toFixed(1) + " days of data)"}</span>` : `<span class="sub">Not enough price data after the post yet.</span>`}
+    </div>
+    <div class="chart">${chartSVG(it, pts, cls)}</div>`;
+}
+
+function fillMarket(it, el, wrap){
+  const st = marketStats(it), valid = st.filter(m => m.ch != null);
+  const avg = valid.length ? valid.reduce((a,m)=>a+m.ch,0)/valid.length : null;
+  const cls = avg == null ? "" : avg >= 0 ? "green" : "red";
+  el.classList.remove("green","red"); if(cls) el.classList.add(cls);
+  const lastT = Math.max(...st.map(m => m.pts[m.pts.length-1][0]));
+  const full = it.ts + it.ra*DAY <= Date.now() + HOUR;
+  const chips = st.map(m => `<span class="chip"><i style="background:${m.color}"></i>${esc(m.name)} <b class="${m.ch==null?"":m.ch>=0?"up":"down"}">${m.ch==null?"n/a":fmtPct(m.ch)}</b></span>`).join("");
+  wrap.innerHTML = `
+    <div class="verdict">
+      ${avg != null ? `<span class="big ${avg>=0?"up":"down"}">${avg>=0?"▲":"▼"} ${fmtPct(avg)}</span><span class="sub">average of the major indices, ${full ? it.ra + " day" + (it.ra===1?"":"s") + " after the post" : "so far (" + ((lastT - it.ts)/DAY).toFixed(1) + " days of data)"}</span>` : `<span class="sub">Not enough market data after the post yet.</span>`}
+    </div>
+    <div class="chart">${chartMultiSVG(it, st)}</div>
+    <div class="chips">${chips}</div>`;
+}
+
+async function loadPrices(it){
+  it.err = null;
+  try{ const r = await getSeries(it); it.price = r.pts; it.cur = r.cur; it.multi = r.multi || null; }catch(e){ it.err = e.message; it.price = null; }
+  fillChart(it);
+}
+function retry(id){ const it = items.find(i=>i.id===id); if(!it) return; document.getElementById("card-"+id).querySelector(".chartwrap").innerHTML = '<div class="loading">Retrying…</div>'; loadPrices(it); }
+
+// Re-draw one card's chart and controls without reloading its embedded post.
+function updateCard(it){
+  const el = document.getElementById("card-"+it.id); if(!el) return;
+  el.querySelectorAll(".tsv").forEach(e => e.textContent = fmtUTC(it.ts));
+  el.querySelector(".foot").innerHTML = footHTML(it);
+  el.querySelector(".controls").innerHTML = controlsHTML(it);
+  el.querySelector(".chartwrap").innerHTML = `<div class="loading">Loading ${esc(symOf(it))} price data…</div>`;
+  it.price = null;
+  loadPrices(it);
+  syncHash();
+}
+function setRange(id, v){
+  const it = items.find(i=>i.id===id); if(!it) return;
+  if(v === "c"){ /* keep current numbers, just reveal the custom inputs */ }
+  else { it.rb = RANGES[v][0]; it.ra = RANGES[v][1]; }
+  updateCard(it);
+}
+function setCustom(id, before, after){
+  const it = items.find(i=>i.id===id); if(!it) return;
+  if(before != null) it.rb = clamp(before, 0, 365, it.rb);
+  if(after != null) it.ra = clamp(after, 1, 365, it.ra);
+  updateCard(it);
+}
+function setTime(id, v){
+  const it = items.find(i=>i.id===id); if(!it || !v) return;
+  const ts = new Date(v + ":00Z").getTime();
+  if(!isFinite(ts)) return;
+  if(ts > Date.now()){ toast("That time is in the future."); updateCard(it); return; }
+  it.ts = ts; updateCard(it);
+}
+
+function renderAll(){
+  const box = $("results");
+  box.innerHTML = items.map(it => `<div class="shot" id="card-${it.id}">${cardHTML(it)}</div>`).join("");
+  $("empty").style.display = items.length ? "none" : "block";
+  $("globalActions").style.display = items.length ? "flex" : "none";
+  items.forEach((it,i) => { mountEmbed(it); if(it.price || it.err){ fillChart(it); } else setTimeout(()=>loadPrices(it), i*1200); });
+}
+
+/* ---------- X embeds ---------- */
+function waitTwttr(ms=8000){
+  return new Promise((res, rej) => {
+    const t0 = Date.now();
+    (function poll(){
+      if(window.twttr && twttr.widgets && twttr.widgets.createTweet) return res(twttr);
+      if(Date.now() - t0 > ms) return rej(new Error("widgets.js not available"));
+      setTimeout(poll, 150);
+    })();
+  });
+}
+function mountEmbed(it){
+  const x = parseXLink(it.u); if(!x) return;
+  const card = document.getElementById("card-"+it.id); if(!card) return;
+  const post = card.querySelector(".post"), box = card.querySelector(".embed");
+  const fail = () => post.classList.add("noembed");
+  waitTwttr()
+    .then(tw => tw.widgets.createTweet(x.id, box, { theme:"dark", conversation:"none", dnt:true, align:"center" }))
+    .then(node => { if(!node) return fail(); const l = box.querySelector(".embed-loading"); if(l) l.remove(); })
+    .catch(fail);
+}
+
+function removeItem(id){ items = items.filter(i=>i.id!==id); renderAll(); syncHash(); }
+function clearAll(){ items = []; renderAll(); syncHash(); }
+
+/* ---------- sharing (state lives in the URL hash) ---------- */
+function encodeState(list){
+  const slim = list.map(i => ({u:i.u,t:i.t,a:i.a,h:i.h,p:i.p,ts:i.ts,c:i.c,s:i.sym,k:i.k,rb:i.rb,ra:i.ra}));
+  return btoa(unescape(encodeURIComponent(JSON.stringify(slim)))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+}
+function decodeState(str){
+  str = str.replace(/-/g,"+").replace(/_/g,"/"); while(str.length % 4) str += "=";
+  return JSON.parse(decodeURIComponent(escape(atob(str))));
+}
+function shareURL(list){ return location.origin + location.pathname + "#d=" + encodeState(list); }
+function syncHash(){ history.replaceState(null, "", items.length ? "#d=" + encodeState(items) : location.pathname); }
+async function copyText(url){
+  try{ await navigator.clipboard.writeText(url); toast("Link copied"); }catch(e){ prompt("Copy this link:", url); }
+}
+function copyLink(){ copyText(shareURL(items)); }
+function copyCard(id){ const it = items.find(i=>i.id===id); if(it) copyText(shareURL([it])); }
+function shareText(it){
+  const el = document.getElementById("card-"+it.id);
+  const r = el && el.classList.contains("green") ? " — price pumped 🟢" : el && el.classList.contains("red") ? " — price dumped 🔴" : "";
+  return "Hype vs Price" + r;
+}
+function shareCard(id){
+  const it = items.find(i=>i.id===id); if(!it) return;
+  window.open("https://x.com/intent/tweet?text=" + encodeURIComponent(shareText(it)) + "&url=" + encodeURIComponent(shareURL([it])), "_blank", "noopener");
+}
+function shareOnX(){
+  window.open("https://x.com/intent/tweet?text=" + encodeURIComponent("Hype posts vs what the price actually did:") + "&url=" + encodeURIComponent(shareURL(items)), "_blank", "noopener");
+}
+
+/* ---------- boot ---------- */
+(function boot(){
+  const m = location.hash.match(/^#d=(.+)$/);
+  if(m){
+    try{
+      items = decodeState(m[1]).map(o => ({
+        id: nextId++, u:o.u, t:o.t||"", a:o.a||"", h:o.h||"", p:o.p||"", ts:o.ts, c:o.c, sym:o.s||"",
+        k:o.k||"crypto", rb: clamp(o.rb,0,365,1), ra: clamp(o.ra,1,365,7)
+      }));
+    }catch(e){ items = []; }
   }
-  updateSelectStage();
-}
-function updateSelectStage() {
-  if (selectedIds.size === 0) {
-    document.getElementById("select-stage").classList.add("hidden");
-    return;
-  }
-  document.getElementById("select-stage").classList.remove("hidden");
-  document.getElementById("selected-count").textContent = selectedIds.size;
-  const list = document.getElementById("selected-list");
-  list.innerHTML = [...selectedIds].map(id => {
-    const p = POSTS.find(x => x.id === id);
-    return `<div class="post-card selected"><div class="post-content">
-      <div class="author">\( {p.author} <span class="handle"> \){p.handle}</span></div>
-      <div class="timestamp">${p.date}</div>
-      <div class="text">${p.text.slice(0, 110)}…</div>
-    </div></div>`;
-  }).join("");
-}
-function backToSearch() { document.getElementById("select-stage").classList.add("hidden"); }
-function confirmAndShowPrices() {
-  document.getElementById("search-stage").classList.add("hidden");
-  document.getElementById("select-stage").classList.add("hidden");
-  document.getElementById("final-stage").classList.remove("hidden");
-  const container = document.getElementById("final-results");
-  container.innerHTML = [...selectedIds].map(id => {
-    const p = POSTS.find(x => x.id === id);
-    const postPrice = getPrice(p.date);
-    const before = getPrice(addDays(p.date, -1));
-    const after3 = getPrice(addDays(p.date, 3));
-    let delta = null, direction = "";
-    if (postPrice && after3) {
-      delta = ((after3 - postPrice) / postPrice * 100).toFixed(1);
-      direction = after3 > postPrice ? "up" : "down";
-    }
-    const outlineClass = direction === "up" ? "green" : (direction === "down" ? "red" : "");
-    return `<div class="post-card ${outlineClass}">
-      <div class="post-content">
-        <div class="author">\( {p.author} <span class="handle"> \){p.handle}</span></div>
-        <div class="timestamp">${p.date} ${p.time} UTC</div>
-        <div class="text">${p.text}</div>
-        <a href="${p.url}" target="_blank" rel="noopener">View on X →</a>
-      </div>
-      <div class="price-panel">
-        <h4>XRP Price Context</h4>
-        <div class="price-row"><span class="price-label">1 day before</span><span class="price-value">\( {before ? " \)" + before.toFixed(2) : "n/a"}</span></div>
-        <div class="price-row"><span class="price-label">At post time</span><span class="price-value">\( {postPrice ? " \)" + postPrice.toFixed(2) : "n/a"}</span></div>
-        <div class="price-row"><span class="price-label">3 days after</span><span class="price-value">\( {after3 ? " \)" + after3.toFixed(2) : "n/a"}</span></div>
-        ${delta !== null ? `<div class="delta \( {direction}"> \){direction === "up" ? "▲" : "▼"} ${Math.abs(delta)}% in 3 days</div>` : `<div class="delta">Price data incomplete</div>`}
-      </div>
-    </div>`;
-  }).join("");
-}
-function resetApp() {
-  selectedIds.clear();
-  document.getElementById("final-stage").classList.add("hidden");
-  document.getElementById("search-stage").classList.remove("hidden");
-  document.getElementById("search-results").innerHTML = "";
-  runSearch();
-}
-runSearch();
+  renderAll();
+})();
 </script>
 </body>
 </html>
